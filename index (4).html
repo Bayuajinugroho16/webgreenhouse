@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Greenhouse Monitoring · GH-01</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#0B141C; --accent:#7BDB80; --accent-dim:rgba(123,219,128,.14);
+  --text:#E6F0EA; --muted:#8FA3A0; --danger:#FF4D5E;
+  --glass:rgba(255,255,255,.045); --border:rgba(255,255,255,.1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%}
+body{
+  font-family:'Outfit',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:
+    radial-gradient(900px 500px at 85% -10%,rgba(123,219,128,.14),transparent 60%),
+    radial-gradient(700px 500px at -10% 110%,rgba(60,140,180,.14),transparent 60%),
+    var(--bg);
+  background-attachment:fixed;
+  color:var(--text);
+  padding:24px;
+}
+.wrap{max-width:1100px;margin:0 auto}
+
+/* Header */
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+header h1{font-size:clamp(1.4rem,3vw,2rem);font-weight:600;letter-spacing:-.01em}
+header p{color:var(--muted);font-size:.95rem;margin-top:4px}
+.status{display:flex;align-items:center;gap:10px;padding:8px 16px;border-radius:999px;
+  background:var(--glass);border:1px solid var(--border);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font-size:.9rem;white-space:nowrap}
+.dot{width:12px;height:12px;border-radius:50%;background:var(--danger);box-shadow:0 0 10px var(--danger)}
+.status.online .dot{background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 3px var(--accent)}}
+
+/* Grid */
+.sensors{display:grid;grid-template-columns:repeat(6,1fr);gap:18px}
+.card{
+  grid-column:span 2;position:relative;padding:22px;border-radius:20px;
+  background:var(--glass);border:1px solid var(--border);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  overflow:hidden;transition:border-color .3s,box-shadow .3s;
+}
+.card.wide{grid-column:span 3}
+.card .head{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.95rem}
+.card svg{width:22px;height:22px;stroke:var(--accent);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.value{margin-top:18px;font-size:clamp(2.2rem,5vw,3rem);font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.value small{font-size:1rem;font-weight:400;color:var(--muted);margin-left:6px}
+.value.glow{animation:glow .9s ease-out}
+@keyframes glow{
+  0%{color:#fff;text-shadow:0 0 22px var(--accent),0 0 44px var(--accent)}
+  100%{color:var(--text);text-shadow:0 0 0 transparent}
+}
+.sub{margin-top:10px;font-size:.85rem;color:var(--muted);min-height:1.2em}
+
+/* Alarm */
+.card.alarm{border-color:var(--danger);animation:blinkCard 1s infinite}
+.card.alarm svg{stroke:var(--danger)}
+.card.alarm .sub{color:var(--danger);font-weight:500}
+@keyframes blinkCard{
+  0%,100%{box-shadow:0 0 0 rgba(255,77,94,0);background:var(--glass)}
+  50%{box-shadow:0 0 34px rgba(255,77,94,.55);background:rgba(255,77,94,.16)}
+}
+body.alarm::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+  box-shadow:inset 0 0 120px rgba(255,77,94,.45);animation:blinkEdge 1s infinite;
+}
+@keyframes blinkEdge{50%{opacity:.15}}
+
+/* Controls */
+h2{font-size:1.05rem;font-weight:500;color:var(--muted);margin:32px 0 14px}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.btn{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:24px;border-radius:20px;cursor:pointer;text-align:left;
+  background:var(--glass);border:1px solid var(--border);color:var(--text);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  font:inherit;transition:transform .2s,border-color .2s,box-shadow .2s,background .2s;
+}
+.btn:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 10px 30px rgba(123,219,128,.15)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn:focus-visible,.card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.btn .name{font-size:1.25rem;font-weight:600}
+.btn .state{font-size:.9rem;color:var(--muted);margin-top:4px}
+.btn svg{width:34px;height:34px;stroke:var(--muted);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.switch{width:64px;height:34px;border-radius:999px;background:rgba(255,255,255,.12);position:relative;flex:none;transition:background .25s}
+.switch::after{content:"";position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;background:#fff;transition:transform .25s}
+.btn.on{background:var(--accent-dim);border-color:var(--accent);box-shadow:0 0 26px rgba(123,219,128,.2)}
+.btn.on svg{stroke:var(--accent)}
+.btn.on .state{color:var(--accent)}
+.btn.on .switch{background:var(--accent)}
+.btn.on .switch::after{transform:translateX(30px);background:var(--bg)}
+.btn .left{display:flex;align-items:center;gap:16px}
+
+footer{margin-top:28px;color:var(--muted);font-size:.82rem;text-align:center}
+
+@media (max-width:860px){
+  .sensors{grid-template-columns:repeat(2,1fr)}
+  .card,.card.wide{grid-column:span 1}
+}
+@media (max-width:520px){
+  body{padding:16px}
+  header{flex-direction:column;align-items:flex-start}
+  .sensors,.controls{grid-template-columns:1fr}
+  .card,.card.wide{grid-column:span 1}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Greenhouse Monitoring</h1>
+      <p>Unit GH-01 · data langsung dari ESP32</p>
+    </div>
+    <div class="status" id="status" role="status" aria-live="polite">
+      <span class="dot"></span><span id="statusText">Offline</span>
+    </div>
+  </header>
+
+  <section class="sensors" aria-label="Data sensor">
+    <article class="card">
+      <div class="head">
+        <svg viewBox="0 0 24 24"><path d="M14 14.76V4a2 2 0 0 0-4 0v10.76a4 4 0 1 0 4 0z"/><path d="M12 9v7"/></svg>Suhu
+      </div>
+      <div class="value" id="temp">--<small>°C</small></div>
+      <div class="sub" id="tempSub">Menunggu data</div>
+    </article>
+
+    <article class="card">
+      <div class="head">
+        <svg viewBox="0 0 24 24"><path d="M12 2.5s6.5 6.6 6.5 11.5a6.5 6.5 0 0 1-13 0C5.5 9.1 12 2.5 12 2.5z"/><path d="M9 14.5a3 3 0 0 0 3 3"/></svg>Kelembapan
+      </div>
+      <div class="value" id="hum">--<small>%</small></div>
+      <div class="sub" id="humSub">Menunggu data</div>
+    </article>
+
+    <article class="card">
+      <div class="head">
+        <svg viewBox="0 0 24 24"><path d="M4.5 18a9 9 0 1 1 15 0"/><path d="M12 14l4-5"/><circle cx="12" cy="14" r="1.2"/></svg>Tekanan
+      </div>
+      <div class="value" id="pressure">--<small>hPa</small></div>
+      <div class="sub" id="pressureSub">Menunggu data</div>
+    </article>
+
+    <article class="card wide">
+      <div class="head">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>Cahaya (LDR)
+      </div>
+      <div class="value" id="ldr">--<small>/ 4095</small></div>
+      <div class="sub" id="ldrSub">Menunggu data</div>
+    </article>
+
+    <article class="card wide" id="distCard">
+      <div class="head">
+        <svg viewBox="0 0 24 24"><rect x="2.5" y="8" width="19" height="8" rx="1.5"/><path d="M6 8v3M10 8v4M14 8v3M18 8v4"/></svg>Jarak
+      </div>
+      <div class="value" id="dist">--<small>cm</small></div>
+      <div class="sub" id="distSub">Menunggu data</div>
+    </article>
+  </section>
+
+  <h2>Kontrol</h2>
+  <section class="controls">
+    <button class="btn" id="pumpBtn" type="button" aria-pressed="false">
+      <span class="left">
+        <svg viewBox="0 0 24 24"><path d="M12 3s5 5.2 5 9a5 5 0 0 1-10 0c0-3.8 5-9 5-9z"/><path d="M4 21h16"/></svg>
+        <span><div class="name">Pompa</div><div class="state" id="pumpState">Mati</div></span>
+      </span>
+      <span class="switch"></span>
+    </button>
+    <button class="btn" id="lightBtn" type="button" aria-pressed="false">
+      <span class="left">
+        <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/></svg>
+        <span><div class="name">Lampu</div><div class="state" id="lightState">Mati</div></span>
+      </span>
+      <span class="switch"></span>
+    </button>
+  </section>
+
+  <footer id="lastUpdate">Belum ada data masuk</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js"></script>
+<script>
+const CFG = {
+  host: "p042ff17.ala.asia-southeast1.emqxsl.com",
+  port: 8084,
+  path: "/mqtt",
+  user: "user_greenhouse",
+  pass: "rahasia123",
+  teleTopic: "greenhouse/gh01/telemetry",
+  cmdTopic: "greenhouse/gh01/command"
+};
+
+const $ = id => document.getElementById(id);
+const state = { pump: false, light: false };
+let client = null, retryTimer = null;
+
+/* ---------- UI helpers ---------- */
+function setOnline(on){
+  $("status").classList.toggle("online", on);
+  $("statusText").textContent = on ? "Online" : "Offline";
+}
+
+function setValue(id, num){
+  const el = $(id);
+  const unit = el.querySelector("small").outerHTML;
+  const text = (Math.round(Number(num) * 10) / 10).toString();
+  if (el.dataset.v !== text){
+    el.dataset.v = text;
+    el.innerHTML = text + unit;
+    el.classList.remove("glow");
+    void el.offsetWidth;            // restart animation
+    el.classList.add("glow");
+  }
+}
+
+function renderButton(name){
+  const on = state[name];
+  const btn = $(name + "Btn");
+  btn.classList.toggle("on", on);
+  btn.setAttribute("aria-pressed", on);
+  $(name + "State").textContent = on ? "Menyala" : "Mati";
+}
+
+function note(id, text){ $(id).textContent = text; }
+
+/* ---------- Telemetry ---------- */
+function handleTelemetry(d){
+  if (d.temp != null){
+    setValue("temp", d.temp);
+    note("tempSub", d.temp > 35 ? "Terlalu panas" : d.temp < 18 ? "Terlalu dingin" : "Dalam rentang normal");
+  }
+  if (d.hum != null){
+    setValue("hum", d.hum);
+    note("humSub", d.hum > 85 ? "Sangat lembap" : d.hum < 40 ? "Cenderung kering" : "Dalam rentang normal");
+  }
+  if (d.pressure != null){
+    setValue("pressure", d.pressure);
+    note("pressureSub", "Tekanan udara sekitar");
+  }
+  if (d.ldr != null){
+    setValue("ldr", d.ldr);
+    note("ldrSub", d.ldr > 2500 ? "Gelap" : d.ldr > 800 ? "Redup" : "Terang");
+  }
+  if (d.dist != null) setValue("dist", d.dist);
+
+  if (d.object != null){
+    const alarm = Number(d.object) === 1;
+    $("distCard").classList.toggle("alarm", alarm);
+    document.body.classList.toggle("alarm", alarm);
+    note("distSub", alarm ? "Ada benda di depan sensor" : "Area depan sensor kosong");
+  }
+
+  // sinkronkan tombol dengan status dari ESP32
+  ["pump","light"].forEach(k => {
+    if (d[k] != null){
+      state[k] = (d[k] === 1 || d[k] === true || d[k] === "1");
+      renderButton(k);
+    }
+  });
+
+  $("lastUpdate").textContent = "Data terakhir: " + new Date().toLocaleTimeString("id-ID");
+}
+
+/* ---------- MQTT ---------- */
+function connect(){
+  clearTimeout(retryTimer);
+  const clientId = "web_gh01_" + Math.random().toString(16).slice(2, 10);
+  client = new Paho.MQTT.Client(CFG.host, CFG.port, CFG.path, clientId);
+
+  client.onConnectionLost = res => {
+    setOnline(false);
+    console.warn("Koneksi terputus:", res.errorMessage);
+    scheduleReconnect();
+  };
+
+  client.onMessageArrived = msg => {
+    try { handleTelemetry(JSON.parse(msg.payloadString)); }
+    catch (e){ console.error("JSON tidak valid:", msg.payloadString); }
+  };
+
+  client.connect({
+    userName: CFG.user,
+    password: CFG.pass,
+    useSSL: true,
+    timeout: 8,
+    keepAliveInterval: 30,
+    cleanSession: true,
+    onSuccess: () => {
+      setOnline(true);
+      client.subscribe(CFG.teleTopic);
+    },
+    onFailure: err => {
+      setOnline(false);
+      console.error("Gagal connect:", err.errorMessage);
+      scheduleReconnect();
+    }
+  });
+}
+
+function scheduleReconnect(){
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(connect, 3000);
+}
+
+function sendCommand(key, value){
+  if (!client || !client.isConnected()){
+    alert("Belum terhubung ke broker. Tunggu indikator berubah hijau.");
+    return false;
+  }
+  const m = new Paho.MQTT.Message(JSON.stringify({ [key]: value }));
+  m.destinationName = CFG.cmdTopic;
+  client.send(m);
+  return true;
+}
+
+["pump","light"].forEach(k => {
+  $(k + "Btn").addEventListener("click", () => {
+    const next = !state[k];
+    if (sendCommand(k, next)){
+      state[k] = next;
+      renderButton(k);
+    }
+  });
+});
+
+window.addEventListener("load", connect);
+</script>
+</body>
+</html>
